@@ -1,47 +1,29 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+      
+  <nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid w-100">
+      <a class="navbar-brand" href="#">Employee Scheduler</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav">
+          <RouterLink class="nav-link" to="/">Home</RouterLink>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+          <RouterLink class="nav-link" to="/employees">Employees</RouterLink>
+
+          <a class="nav-link" href="#">Schedules</a>
+        </div>
+      </div>
     </div>
-  </header>
-
-  <main>
-    <TheWelcome />
+  </nav>
+  <main class="container">
+    <RouterView />
   </main>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
 </style>

@@ -1,6 +1,23 @@
 import './assets/main.css'
-
 import { createApp } from 'vue'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+import { createWebHistory, createRouter } from 'vue-router'
+import TheWelcome from './components/TheWelcome.vue'
+import HelloWorld from './components/HelloWorld.vue'
+import EmployeesView from './views/EmployeesView.vue'
+
+
+const routes = [
+  { path: '/', component: TheWelcome },
+  { path: '/employees', component: EmployeesView },
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+})
+
+createApp(App)
+  .use(router)
+  .mount('#app')
