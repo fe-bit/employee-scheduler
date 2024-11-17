@@ -12,10 +12,8 @@
       <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
         <div class="navbar-nav">
           <RouterLink class="nav-link" to="/">Home</RouterLink>
-
           <RouterLink class="nav-link" to="/employees">Employees</RouterLink>
-
-          <a class="nav-link" href="#">Schedules</a>
+          <RouterLink class="nav-link" to="/schedules">Schedules</RouterLink>
         </div>
       </div>
     </div>
