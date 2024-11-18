@@ -44,7 +44,8 @@ export default{
         async submitData() {
       const data = {
         shifts: [
-            {employee_id: 1, date_start: "2024-12-20 06:00:00", date_end: "2024-12-20 14:00:00", type: "RS", preference: "preferred"}
+            {employee_id: 1, date_start: "2024-12-20 06:00:00", date_end: "2024-12-20 14:00:00", preference: "preferred"},
+            {employee_id: 2, date_start: "2024-12-01 06:00:00", date_end: "2024-12-01 14:00:00", preference: "preferred"},
         ],
       };
 

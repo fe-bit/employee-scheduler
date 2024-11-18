@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import pandas as pd
-from datetime import datetime
+from optimizations.genetic_algorithm import GeneticAlgorithm
 
 
 app = Flask(__name__)
@@ -22,6 +22,9 @@ def run_optimization():
     df['date_end'] = pd.to_datetime(df['date_end'])
 
     print(df)
+    genetic_algorithm = GeneticAlgorithm()
+    data_encoded = genetic_algorithm.evolve(10)
+    print(data_encoded)
     return jsonify({"message": "Data received successfully"})
     """Run a job on the hybrid solver when the run button is clicked."""
 
