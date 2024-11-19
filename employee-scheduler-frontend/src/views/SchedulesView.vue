@@ -165,7 +165,7 @@ export default{
         <tbody>
             <tr v-if="schedule" v-for="i in Object.keys(schedule)" >
                 <td class="text-center">{{ i }} (<span :class="{ 'text-success': totalWorkingHours(i) == 40, 'text-danger': totalWorkingHours(i) != 40 }">{{ totalWorkingHours(i) }}</span>)</td>
-                <td class="text-center" v-for="day in days" :key="day" :set="shifts=filteredSchedule(day, i)" :class="{ 'bg-danger': shifts.length > 1 }">
+                <td class="text-center" v-for="day in days" :key="day" :set="shifts=filteredSchedule(day, i)" :class="{ 'bg-danger': shifts && shifts.length > 1 }">
                     <p v-for="shift in shifts">
                         <span>
                             {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(shift.date_start, shift.date_end)"><sup class="">+1</sup></span>
