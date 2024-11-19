@@ -34,7 +34,7 @@ def get_schedule():
             {
                 "date_start": d[0].isoformat(), 
                 "date_end": d[1].isoformat(), 
-                "hours": d[1]-d[0] / 3600,
+                "hours": (d[1]-d[0]).total_seconds() / 3600,
             }
             for d in schedule
         ]

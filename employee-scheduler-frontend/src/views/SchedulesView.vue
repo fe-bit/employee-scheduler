@@ -120,8 +120,13 @@ export default{
       return x;
     },
     
-
-    
+    totalWorkingHours(employee){
+        if (this.schedule && this.schedule[employee] && this.schedule[employee].length > 0){
+            return this.schedule[employee].map(item => item.hours).reduce((acc, val) => acc + val, 0)
+        } else {
+            return 0;
+        }
+    }
   },
 }
 
@@ -142,8 +147,8 @@ export default{
             </tr>
         </thead>
         <tbody>
-            <tr v-for="i in employeeCount" :key="i">
-                <td>{{ i }}</td>
+            <tr v-if="schedule" v-for="i in Object.keys(schedule)" >
+                <td>{{ i }} ({{ totalWorkingHours(i) }})</td>
                 <td v-for="day in days" :key="day" :set="shifts=filteredSchedule(day, i)">
                     <p v-for="shift in shifts">
                         <span>
