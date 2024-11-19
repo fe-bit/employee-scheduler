@@ -23,7 +23,7 @@ class GeneticAlgorithmTabu:
         print(len(self.shifts)*8/employees)
         self.chromosome_length = len(self.shifts)
         n = employees
-        self.gene_min = 0
+        self.gene_min = 1
         self.gene_max = n
         # self.employees = {
         #     0: {"name": "Charlie", "qualification": [CarType.KTW_SW, CarType.RTW_SW]}

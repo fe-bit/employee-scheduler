@@ -16,12 +16,18 @@ def hello_world():
 
 @app.route('/api/get-schedule')
 def get_schedule():
+    employee_count = request.args.get('employees')
+    if employee_count: 
+        employee_count = int(employee_count)
+    else:
+        employee_count = 22
+    
     ga = GeneticAlgorithmTabu(
         population_size=100,
         mutation_rate=0.01,
         crossover_rate=0.8,
         elitism=True,
-        employees=22
+        employees=employee_count
     )
     best_chromosome, best_fitness, best_fitness_history = ga.evolve(
         generations=100,

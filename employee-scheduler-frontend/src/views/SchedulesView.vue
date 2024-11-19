@@ -6,7 +6,7 @@ import { eachDayOfInterval, format } from 'date-fns';
 export default{
     data() {
         return {
-            employeeCount: 3,
+            employeeCount: 22,
 
             items: [
                 { id: 1, name: 'Alice', shifts: [
@@ -64,7 +64,10 @@ export default{
 
     async getData(){
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/get-schedule');
+            const params = new URLSearchParams({
+                employees: this.employeeCount
+            });
+            const response = await fetch(`http://127.0.0.1:5000/api/get-schedule?${params.toString()}`);
             const data = await response.json();
             this.schedule = data.data;
             for (let employee in this.schedule) {
