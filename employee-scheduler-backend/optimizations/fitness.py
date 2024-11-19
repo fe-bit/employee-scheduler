@@ -10,7 +10,7 @@ import enum
 import random
 from shifts import create_shifts_of_month, get_shifts_per_employee, CarType, get_total_work_hours_per_employee
 
-BREAK_PENALTY = 20
+BREAK_PENALTY = 40
 
 
 def calculate_fitness(employee_preferences, genes, shifts):
@@ -48,7 +48,8 @@ def fitness_total_hours_per_employee(shifts_per_employee):
 
     for employee, total_work_hours in get_total_work_hours_per_employee(shifts_per_employee).items():
         if total_work_hours < 35 or total_work_hours > 45:
-            faults += abs(40-total_work_hours) * 0.5
+            ff = abs(40-total_work_hours) * 0.5
+            faults += ff
         else:
             correct += 1
     return correct, faults

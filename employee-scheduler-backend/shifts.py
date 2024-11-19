@@ -56,6 +56,9 @@ def get_shifts_per_employee(shifts, genes):
             result[gene].append(shift)
         else:
             result[gene] = [shift]
+    for gene in result:
+        result[gene] = sorted(result[gene], key=lambda x: x[0], reverse=False)
+
     return result
 
 
