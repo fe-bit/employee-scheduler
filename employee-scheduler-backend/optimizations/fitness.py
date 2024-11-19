@@ -8,14 +8,18 @@ from datetime import datetime, date, timedelta, time
 import calendar
 import enum
 import random
-from shifts import create_shifts_of_month, get_shifts_per_employee, CarType
+from shifts import create_shifts_of_month, get_shifts_per_employee, CarType, get_total_work_hours_per_employee
 
+BREAK_PENALTY = 20
 
 
 def calculate_fitness(employee_preferences, genes, shifts):
     fitness = 0
     shifts_per_employee = get_shifts_per_employee(shifts, genes)
     correct, faults = fitness_break_between_shifts(shifts_per_employee)
+    fitness -= faults
+
+    correct, faults = fitness_total_hours_per_employee(shifts_per_employee)
     fitness -= faults
     return fitness
     
@@ -29,11 +33,23 @@ def fitness_break_between_shifts(shifts_per_employee):
             time_diff = abs(right_job - left_job)
             hours_diff = time_diff.total_seconds() / 3600
             if hours_diff < 10:
-                faults += 1
+                faults += BREAK_PENALTY
             else:
-                correct += 1
+                correct += BREAK_PENALTY
     return correct, faults
 
 def fitness_qualification(shifts_per_employee, qualifications):
     # TODO
     pass
+
+def fitness_total_hours_per_employee(shifts_per_employee):
+    faults = 0
+    correct = 0
+
+    for employee, total_work_hours in get_total_work_hours_per_employee(shifts_per_employee).items():
+        if total_work_hours < 35 or total_work_hours > 45:
+            faults += abs(40-total_work_hours) * 0.5
+        else:
+            correct += 1
+    return correct, faults
+

@@ -2,7 +2,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import pandas as pd
 from optimizations.genetic_algorithm import GeneticAlgorithm
-
+from optimizations.genetic_algorithm.genetic_algorithm_tabu import GeneticAlgorithmTabu
+from shifts import get_shifts_per_employee
 
 app = Flask(__name__)
 CORS(app)
@@ -11,6 +12,34 @@ CORS(app)
 @app.route('/api/data')
 def hello_world():
     data = {'message': 'Hello from Flask!'}
+    return jsonify(data)
+
+@app.route('/api/get-schedule')
+def get_schedule():
+    ga = GeneticAlgorithmTabu(
+        population_size=100,
+        mutation_rate=0.01,
+        crossover_rate=0.8,
+        elitism=True,
+        employees=22
+    )
+    best_chromosome, best_fitness, best_fitness_history = ga.evolve(
+        generations=100,
+        target_fitness=0
+    )
+    schedule_by_employee = get_shifts_per_employee(ga.shifts, best_chromosome)
+    result = {}
+    for employee, schedule in schedule_by_employee.items():
+        sched = [
+            {
+                "date_start": d[0].isoformat(), 
+                "date_end": d[1].isoformat(), 
+                "hours": d[1]-d[0] / 3600,
+            }
+            for d in schedule
+        ]
+        result[employee] = sched
+    data = {'data': result}
     return jsonify(data)
 
 

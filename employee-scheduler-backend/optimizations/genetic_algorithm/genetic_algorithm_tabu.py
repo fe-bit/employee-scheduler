@@ -6,10 +6,11 @@ import enum
 import random
 from shifts import create_shifts_of_month, get_shifts_per_employee, CarType
 from optimizations.fitness import calculate_fitness
+import hashlib
 
 
 
-class GeneticAlgorithm:
+class GeneticAlgorithmTabu:
 
     def __init__(self, population_size=100, mutation_rate=0.01, crossover_rate=0.8, elitism=True, employees=10):
         self.population_size = population_size
@@ -32,17 +33,31 @@ class GeneticAlgorithm:
         self.employee_preferences_df = pd.DataFrame.from_records(self.employee_preferences)
         self.employee_idx2id = {i: v for i, v in enumerate(self.employee_preferences_df["employee_id"].unique())} # key: id used for GA; value: id of employee
 
+        self.tabu_chromes = set()
         self.population = self._initialize_population()
+
+        
 
     def _initialize_population(self) -> list[list[int]]:
         """Create initial random population with integer genes."""
-        return [
+        pop = [
             [random.randint(self.gene_min, self.gene_max) 
              for _ in range(self.chromosome_length)]
             for _ in range(self.population_size)
         ]
-    
-    
+        for p in pop:
+            p_hash = self.hash_int_list(p)
+            self.tabu_chromes.add(p_hash)
+
+        return pop
+            
+    def hash_int_list(self, int_list):
+        str_list = ''.join(str(num) for num in int_list)
+        hash_object = hashlib.md5(str_list.encode())
+        hex_dig = hash_object.hexdigest()
+        return hex_dig
+
+
     # def run(self, data:pd.DataFrame):
     #     shifts = create_shifts_of_month(12, 2024)
     #     employee_preferences = generate_employee_shifts(num_employees=10, month=12, year=2024)
@@ -81,12 +96,17 @@ class GeneticAlgorithm:
     
     def _mutate(self, chromosome: list[int]) -> list[int]:
         """Apply mutation to a chromosome."""
-        mutated = chromosome.copy()
-        for i in range(len(mutated)):
-            if random.random() < self.muation_rate:
-                # Random integer mutation within range
-                mutated[i] = random.randint(self.gene_min, self.gene_max)
-        return mutated
+        while True:
+            mutated = chromosome.copy()
+            for i in range(len(mutated)):
+                if random.random() < self.muation_rate:
+                    # Random integer mutation within range
+                    mutated[i] = random.randint(self.gene_min, self.gene_max)
+            if h:=self.hash_int_list(mutated) not in self.tabu_chromes:
+                self.tabu_chromes.add(h)
+                return mutated
+            else:
+                print("Tabu")
     
     def evolve(self, generations: int, target_fitness = None) -> tuple[list[int], float, list[float]]:
         """
@@ -137,6 +157,7 @@ class GeneticAlgorithm:
                 # Select parents
                 parent1 = self._select_parent(fitness_values)
                 parent2 = self._select_parent(fitness_values)
+                
                 
                 # Create offspring
                 child1, child2 = self._crossover(parent1, parent2)

@@ -1,10 +1,13 @@
 <script>
 import axios from 'axios';
+import { eachDayOfInterval, format } from 'date-fns';
 
 
 export default{
     data() {
         return {
+            employeeCount: 3,
+
             items: [
                 { id: 1, name: 'Alice', shifts: [
                         {id: 1, time_start: "14:00", time_end: "22:00", type: "RS"},
@@ -38,6 +41,8 @@ export default{
                 }
             ],
             data: null,
+            schedule: null,
+            days: this.getDaysInMonth(2024, 11, 7),
         };
     },
     methods: {
@@ -55,7 +60,68 @@ export default{
       } catch (error) {
         console.error(error);
       }
-    }
+    },
+
+    async getData(){
+        try {
+            const response = await fetch('http://127.0.0.1:5000/api/get-schedule');
+            const data = await response.json();
+            this.schedule = data.data;
+            for (let employee in this.schedule) {
+                const updatedEmployeeSchedule = this.schedule[employee].map(item => {
+                    return {
+                    ...item,
+                    date_start: new Date(item.date_start),
+                    date_end: new Date(item.date_end),
+                    };
+                });
+                this.schedule[employee] = updatedEmployeeSchedule;
+            }
+            // for (let employee in this.schedule){
+            //     for (let i = 0; i < this.schedule[employee].length; i++) {
+            //         this.schedule[employee][i]["date_start"] = new Date(this.schedule[employee][i]["date_start"])
+            //         this.schedule[employee][i]["date_end"] = new Date(this.schedule[employee][i]["date_end"])
+            //     }
+            // }
+            
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+
+    },
+    getDaysInMonth(year, month, first_n_days) {
+        const startDate = new Date(year, month, 1);
+        const endDate = first_n_days ? new Date(year, month, first_n_days) : new Date(year, month + 1, 0);
+        return eachDayOfInterval({ start: startDate, end: endDate });
+    },
+
+    getWeekDay(day){
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return daysOfWeek[day.getDay()]
+    },
+
+    isSameDay(date1, date2) {
+        return (
+            date1.getFullYear() === date2.getFullYear() &&
+            date1.getMonth() === date2.getMonth() &&
+            date1.getDate() === date2.getDate()
+        )
+    },
+
+    filteredSchedule(day, i) {
+        if(this.schedule === null){ 
+            return null
+        }
+        if(this.schedule[i] == null){
+            return null
+        }
+        // console.log(this.schedule[i][0].date_start)
+      let x = this.schedule[i].filter((scheduleItem) => this.isSameDay(scheduleItem.date_start, day));
+      return x;
+    },
+    
+
+    
   },
 }
 
@@ -63,26 +129,27 @@ export default{
 
 <template>
     <div class="container py-3">
-        <button @click="submitData">Sende Daten</button>
-        
+        <input type="number" v-model="employeeCount">
+        <p>Employee value: {{ employeeCount }}</p>
+        <button @click="getData">Get Data</button>
         <table class="table table-hover table-striped table-bordered">
         <thead>
             <tr>
                 <td >Name</td>
-                <td style="width: 14%">Monday</td>
-                <td style="width: 14%">Tuesday</td>
-                <td style="width: 14%">Wednesday</td>
-                <td style="width: 14%">Thursday</td>
-                <td style="width: 14%">Friday</td>
-                <td style="width: 14%">Saturday</td>
-                <td style="width: 14%">Sunday</td>
+                <td style="width: 14%" v-for="day in days">
+                    {{ this.getWeekDay(day) }}<br>{{ day.toLocaleDateString() }}
+                </td>
             </tr>
         </thead>
         <tbody>
-            <tr v-for="item in items" :key="item.id">
-                <td>{{ item.name }}</td>
-                <td v-for="shift in item.shifts" :key="shift.id">
-                    <span v-if="shift.time_start !== null">{{shift.time_start}} - {{shift.time_end}} ({{ shift.type }})</span>
+            <tr v-for="i in employeeCount" :key="i">
+                <td>{{ i }}</td>
+                <td v-for="day in days" :key="day" :set="shifts=filteredSchedule(day, i)">
+                    <p v-for="shift in shifts">
+                        <span>
+                            {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+                        </span>
+                </p>
                 </td>
             </tr>
         </tbody>

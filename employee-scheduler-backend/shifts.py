@@ -27,7 +27,7 @@ def get_dates_for(day:date, start_time:time, hours:time):
 def create_shifts_of_month(month, year):
     shifts = []
     
-    for day in get_days_in_a_month(month, year):
+    for day in get_days_in_a_month(month, year)[:7]:
         # KTW
         shifts.append((*get_dates_for(day, time(6), hours=time(8)), CarType.KTW_D))
         shifts.append((*get_dates_for(day, time(6), hours=time(8)), CarType.KTW_SW))
@@ -56,4 +56,13 @@ def get_shifts_per_employee(shifts, genes):
             result[gene].append(shift)
         else:
             result[gene] = [shift]
+    return result
+
+
+def get_total_work_hours_per_employee(shifts_per_employee):
+    result = {}
+    for employee, schedule in shifts_per_employee.items():
+        work_hours = [abs(s[0] - s[1]).total_seconds() / 3600 for s in schedule]
+        avg_work_hours = sum(work_hours)
+        result[employee] = avg_work_hours
     return result
