@@ -7,7 +7,7 @@ export default{
     data() {
         return {
             employeeCount: 22,
-
+            generations: 100,
             items: [
                 { id: 1, name: 'Alice', shifts: [
                         {id: 1, time_start: "14:00", time_end: "22:00", type: "RS"},
@@ -42,6 +42,7 @@ export default{
             ],
             data: null,
             schedule: null,
+            fitness: null,
             days: this.getDaysInMonth(2024, 11, 7),
         };
     },
@@ -65,10 +66,12 @@ export default{
     async getData(){
         try {
             const params = new URLSearchParams({
-                employees: this.employeeCount
+                employees: this.employeeCount,
+                generations: this.generations,
             });
             const response = await fetch(`http://127.0.0.1:5000/api/get-schedule?${params.toString()}`);
             const data = await response.json();
+            this.fitness = data.fitness;
             this.schedule = data.data;
             for (let employee in this.schedule) {
                 const updatedEmployeeSchedule = this.schedule[employee].map(item => {
@@ -120,6 +123,8 @@ export default{
         }
         // console.log(this.schedule[i][0].date_start)
       let x = this.schedule[i].filter((scheduleItem) => this.isSameDay(scheduleItem.date_start, day));
+      x.sort((a, b) => a.date_start - b.date_start);
+
       return x;
     },
     
@@ -137,27 +142,36 @@ export default{
 
 <template>
     <div class="container py-3">
-        <input type="number" v-model="employeeCount">
-        <p>Employee value: {{ employeeCount }}</p>
+        <div class="mb-3">
+            <label for="employee-count" class="form-label">Employee Count</label>
+            <input type="number" v-model="employeeCount" class="form-control" id="employee-count" placeholder="Employees available">
+        </div>
+        <div class="mb-3">
+            <label for="generations" class="form-label">Generations</label>
+            <input type="number" v-model="generations" class="form-control" id="generations" placeholder="Generations">
+        </div>
+
         <button @click="getData">Get Data</button>
+        <p>Fitness: {{ fitness }}</p>
         <table class="table table-hover table-striped table-bordered">
         <thead>
             <tr>
-                <td >Name</td>
-                <td style="width: 14%" v-for="day in days">
+                <td class="text-center">Name</td>
+                <td style="width: 14%" v-for="day in days" class="text-center">
                     {{ this.getWeekDay(day) }}<br>{{ day.toLocaleDateString() }}
                 </td>
             </tr>
         </thead>
         <tbody>
             <tr v-if="schedule" v-for="i in Object.keys(schedule)" >
-                <td>{{ i }} ({{ totalWorkingHours(i) }})</td>
-                <td v-for="day in days" :key="day" :set="shifts=filteredSchedule(day, i)">
+                <td class="text-center">{{ i }} (<span :class="{ 'text-success': totalWorkingHours(i) == 40, 'text-danger': totalWorkingHours(i) != 40 }">{{ totalWorkingHours(i) }}</span>)</td>
+                <td class="text-center" v-for="day in days" :key="day" :set="shifts=filteredSchedule(day, i)" :class="{ 'bg-danger': shifts.length > 1 }">
                     <p v-for="shift in shifts">
                         <span>
-                            {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+                            {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(shift.date_start, shift.date_end)"><sup class="">+1</sup></span>
                         </span>
-                </p>
+                        <hr>
+                    </p>
                 </td>
             </tr>
         </tbody>

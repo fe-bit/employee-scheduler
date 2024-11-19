@@ -16,11 +16,8 @@ def hello_world():
 
 @app.route('/api/get-schedule')
 def get_schedule():
-    employee_count = request.args.get('employees')
-    if employee_count: 
-        employee_count = int(employee_count)
-    else:
-        employee_count = 22
+    employee_count = int(request.args.get('employees', 22))
+    generations = int(request.args.get('generations', 100))
     
     ga = GeneticAlgorithmTabu(
         population_size=100,
@@ -30,7 +27,7 @@ def get_schedule():
         employees=employee_count
     )
     best_chromosome, best_fitness, best_fitness_history = ga.evolve(
-        generations=100,
+        generations=generations,
         target_fitness=0
     )
     schedule_by_employee = get_shifts_per_employee(ga.shifts, best_chromosome)
@@ -45,7 +42,7 @@ def get_schedule():
             for d in schedule
         ]
         result[employee] = sched
-    data = {'data': result}
+    data = {'data': result, "fitness": best_fitness}
     return jsonify(data)
 
 
