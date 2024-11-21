@@ -14,10 +14,12 @@ def hello_world():
     data = {'message': 'Hello from Flask!'}
     return jsonify(data)
 
-@app.route('/api/get-schedule')
+@app.route('/api/get-schedule', methods=['POST'])
 def get_schedule():
-    employee_count = int(request.args.get('employees', 22))
-    generations = int(request.args.get('generations', 100))
+    data = request.get_json()
+
+    employee_count = int(data.get('employees', 22))
+    generations = int(data.get('generations', 100))
     
     ga = GeneticAlgorithmTabu(
         population_size=100,

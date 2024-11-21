@@ -83,17 +83,48 @@ export default{
                 });
                 this.schedule[employee] = updatedEmployeeSchedule;
             }
-            // for (let employee in this.schedule){
-            //     for (let i = 0; i < this.schedule[employee].length; i++) {
-            //         this.schedule[employee][i]["date_start"] = new Date(this.schedule[employee][i]["date_start"])
-            //         this.schedule[employee][i]["date_end"] = new Date(this.schedule[employee][i]["date_end"])
-            //     }
-            // }
             
         } catch (error) {
             console.error('Error fetching data:', error);
         }
 
+    },
+    async postData() {
+        try {
+            const data = {
+            employees: this.employeeCount,
+            generations: this.generations,
+            };
+
+            const response = await fetch('http://127.0.0.1:5000/api/get-schedule', {
+            method: 'POST', // Set method to POST
+            headers: { 'Content-Type': 'application/json' }, // Set content type
+            body: JSON.stringify(data), // Send data as JSON in the body
+            });
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            this.fitness = responseData.fitness;
+            this.schedule = responseData.data;
+
+            // Update schedule dates as before
+            for (let employee in this.schedule) {
+            const updatedEmployeeSchedule = this.schedule[employee].map(item => {
+                return {
+                ...item,
+                date_start: new Date(item.date_start),
+                date_end: new Date(item.date_end),
+                };
+            });
+            this.schedule[employee] = updatedEmployeeSchedule;
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
     },
     getDaysInMonth(year, month, first_n_days) {
         const startDate = new Date(year, month, 1);
@@ -151,7 +182,7 @@ export default{
             <input type="number" v-model="generations" class="form-control" id="generations" placeholder="Generations">
         </div>
 
-        <button @click="getData">Get Data</button>
+        <button @click="postData">Get Data</button>
         <p>Fitness: {{ fitness }}</p>
         <table class="table table-hover table-striped table-bordered">
         <thead>
