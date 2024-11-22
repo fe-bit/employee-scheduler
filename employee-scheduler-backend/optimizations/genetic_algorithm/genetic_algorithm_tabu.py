@@ -12,14 +12,15 @@ import hashlib
 
 class GeneticAlgorithmTabu:
 
-    def __init__(self, population_size=100, mutation_rate=0.01, crossover_rate=0.8, elitism=True, employees=10):
+    def __init__(self, start_date:date, end_date:date, population_size=100, mutation_rate=0.01, crossover_rate=0.8, elitism=True, employees=10):
         self.population_size = population_size
         
         self.muation_rate = mutation_rate
         self.crossover_rate = crossover_rate
         self.elitism = elitism
 
-        self.shifts = create_shifts_of_month(12, 2024)
+        self.shifts = create_shifts_of_month(start_date, end_date)
+        
         print(len(self.shifts)*8/employees)
         self.chromosome_length = len(self.shifts)
         n = employees

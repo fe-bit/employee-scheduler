@@ -4,15 +4,13 @@ import pandas as pd
 from optimizations.genetic_algorithm import GeneticAlgorithm
 from optimizations.genetic_algorithm.genetic_algorithm_tabu import GeneticAlgorithmTabu
 from shifts import get_shifts_per_employee
+from datetime import date
+from dateutil.parser import parse
+
 
 app = Flask(__name__)
 CORS(app)
 
-
-@app.route('/api/data')
-def hello_world():
-    data = {'message': 'Hello from Flask!'}
-    return jsonify(data)
 
 @app.route('/api/get-schedule', methods=['POST'])
 def get_schedule():
@@ -20,8 +18,20 @@ def get_schedule():
 
     employee_count = int(data.get('employees', 22))
     generations = int(data.get('generations', 100))
+    start_date_str = data.get('start_date')
+    end_date_str = data.get('end_date')
+
+    # Parse datetime strings with timezones
+    start_datetime = parse(start_date_str)
+    end_datetime = parse(end_date_str)
+
+    # Extract date components, handling timezones
+    start_date = start_datetime.date()
+    end_date = end_datetime.date()
+    assert start_date < end_date
     
     ga = GeneticAlgorithmTabu(
+        start_date, end_date,
         population_size=100,
         mutation_rate=0.01,
         crossover_rate=0.8,

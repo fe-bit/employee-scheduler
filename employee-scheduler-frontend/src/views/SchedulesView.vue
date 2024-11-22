@@ -42,10 +42,15 @@ export default{
             data: null,
             schedule: null,
             fitness: null,
-            days: this.getDaysInMonth(2024, 11, 7),
-            selectedDateStart: null,
-            selectedDateEnd: null,
+            
+            selectedDateStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            selectedDateEnd: new Date(new Date().getFullYear(), new Date().getMonth(), 7),
         };
+    },
+    computed:{
+        daysInSelectedRange(){
+            return eachDayOfInterval({ start: this.selectedDateStart, end: this.selectedDateEnd });
+        },
     },
     methods: {
         async postData() {
@@ -125,6 +130,11 @@ export default{
             }
         }
     },
+    watch: {
+        employeeCount(newValue) {
+        this.employeeCount = Math.max(1, newValue);
+        }
+  }
 }
 
 </script>
@@ -156,16 +166,16 @@ export default{
         <thead>
             <tr>
                 <td class="text-center">Name</td>
-                <td style="width: 14%" v-for="day in days" class="text-center">
+                <td style="width: 14%" v-for="day in daysInSelectedRange" :key="day" class="text-center">
                     {{ this.getWeekDay(day) }}<br>{{ day.toLocaleDateString() }}
                 </td>
             </tr>
         </thead>
         <tbody>
-            <tr v-if="schedule" v-for="i in Object.keys(schedule)" >
+            <tr v-if="this.employeeCount>0" v-for="i in this.employeeCount" >
                 <td class="text-center">{{ i }} (<span :class="{ 'text-success': totalWorkingHours(i) == 40, 'text-danger': totalWorkingHours(i) != 40 }">{{ totalWorkingHours(i) }}</span>)</td>
-                <td class="text-center" v-for="day in days" :key="day" :set="shifts=filteredSchedule(day, i)" :class="{ 'bg-danger': shifts && shifts.length > 1 }">
-                    <p v-for="shift in shifts">
+                <td class="text-center" v-for="day in this.daysInSelectedRange" :key="day" :set="shifts=filteredSchedule(day, i)" :class="{ 'bg-danger': shifts && shifts.length > 1 }">
+                    <p v-if="shifts" v-for="shift in shifts">
                         <span>
                             {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(shift.date_start, shift.date_end)"><sup class="">+1</sup></span>
                         </span>
