@@ -1,5 +1,4 @@
 <script>
-import axios from 'axios';
 import { eachDayOfInterval, format } from 'date-fns';
 
 
@@ -44,36 +43,37 @@ export default{
             schedule: null,
             fitness: null,
             days: this.getDaysInMonth(2024, 11, 7),
+            selectedDateStart: null,
+            selectedDateEnd: null,
         };
     },
     methods: {
-        async submitData() {
-      const data = {
-        shifts: [
-            {employee_id: 1, date_start: "2024-12-20 06:00:00", date_end: "2024-12-20 14:00:00", preference: "preferred"},
-            {employee_id: 2, date_start: "2024-12-01 06:00:00", date_end: "2024-12-01 14:00:00", preference: "preferred"},
-        ],
-      };
-
-      try {
-        const response = await axios.post('http://127.0.0.1:5000/api/create-schedule', data);
-        console.log(response.data);
-      } catch (error) {
-        console.error(error);
-      }
-    },
-
-    async getData(){
-        try {
-            const params = new URLSearchParams({
+        async postData() {
+            try {
+                const data = {
                 employees: this.employeeCount,
                 generations: this.generations,
-            });
-            const response = await fetch(`http://127.0.0.1:5000/api/get-schedule?${params.toString()}`);
-            const data = await response.json();
-            this.fitness = data.fitness;
-            this.schedule = data.data;
-            for (let employee in this.schedule) {
+                start_date: this.selectedDateStart.toISOString(),
+                end_date: this.selectedDateEnd.toISOString()
+                };
+
+                const response = await fetch('http://127.0.0.1:5000/api/get-schedule', {
+                method: 'POST', // Set method to POST
+                headers: { 'Content-Type': 'application/json' }, // Set content type
+                body: JSON.stringify(data), // Send data as JSON in the body
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                this.fitness = responseData.fitness;
+                this.schedule = responseData.data;
+
+                // Update schedule dates as before
+                for (let employee in this.schedule) {
                 const updatedEmployeeSchedule = this.schedule[employee].map(item => {
                     return {
                     ...item,
@@ -82,97 +82,65 @@ export default{
                     };
                 });
                 this.schedule[employee] = updatedEmployeeSchedule;
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
             }
-            
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
+        },
+        getDaysInMonth(year, month, first_n_days) {
+            const startDate = new Date(year, month, 1);
+            const endDate = first_n_days ? new Date(year, month, first_n_days) : new Date(year, month + 1, 0);
+            return eachDayOfInterval({ start: startDate, end: endDate });
+        },
 
-    },
-    async postData() {
-        try {
-            const data = {
-            employees: this.employeeCount,
-            generations: this.generations,
-            };
-
-            const response = await fetch('http://127.0.0.1:5000/api/get-schedule', {
-            method: 'POST', // Set method to POST
-            headers: { 'Content-Type': 'application/json' }, // Set content type
-            body: JSON.stringify(data), // Send data as JSON in the body
-            });
-
-            const responseData = await response.json();
-
-            if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        getWeekDay(day){
+            const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            return daysOfWeek[day.getDay()]
+        },
+        isSameDay(date1, date2) {
+            return (
+                date1.getFullYear() === date2.getFullYear() &&
+                date1.getMonth() === date2.getMonth() &&
+                date1.getDate() === date2.getDate()
+            )
+        },
+        filteredSchedule(day, i) {
+            if(this.schedule === null){ 
+                return null
             }
-
-            this.fitness = responseData.fitness;
-            this.schedule = responseData.data;
-
-            // Update schedule dates as before
-            for (let employee in this.schedule) {
-            const updatedEmployeeSchedule = this.schedule[employee].map(item => {
-                return {
-                ...item,
-                date_start: new Date(item.date_start),
-                date_end: new Date(item.date_end),
-                };
-            });
-            this.schedule[employee] = updatedEmployeeSchedule;
+            if(this.schedule[i] == null){
+                return null
             }
-        } catch (error) {
-            console.error('Error fetching data:', error);
+            // console.log(this.schedule[i][0].date_start)
+        let x = this.schedule[i].filter((scheduleItem) => this.isSameDay(scheduleItem.date_start, day));
+        x.sort((a, b) => a.date_start - b.date_start);
+
+        return x;
+        },
+        totalWorkingHours(employee){
+            if (this.schedule && this.schedule[employee] && this.schedule[employee].length > 0){
+                return this.schedule[employee].map(item => item.hours).reduce((acc, val) => acc + val, 0)
+            } else {
+                return 0;
+            }
         }
     },
-    getDaysInMonth(year, month, first_n_days) {
-        const startDate = new Date(year, month, 1);
-        const endDate = first_n_days ? new Date(year, month, first_n_days) : new Date(year, month + 1, 0);
-        return eachDayOfInterval({ start: startDate, end: endDate });
-    },
-
-    getWeekDay(day){
-        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        return daysOfWeek[day.getDay()]
-    },
-
-    isSameDay(date1, date2) {
-        return (
-            date1.getFullYear() === date2.getFullYear() &&
-            date1.getMonth() === date2.getMonth() &&
-            date1.getDate() === date2.getDate()
-        )
-    },
-
-    filteredSchedule(day, i) {
-        if(this.schedule === null){ 
-            return null
-        }
-        if(this.schedule[i] == null){
-            return null
-        }
-        // console.log(this.schedule[i][0].date_start)
-      let x = this.schedule[i].filter((scheduleItem) => this.isSameDay(scheduleItem.date_start, day));
-      x.sort((a, b) => a.date_start - b.date_start);
-
-      return x;
-    },
-    
-    totalWorkingHours(employee){
-        if (this.schedule && this.schedule[employee] && this.schedule[employee].length > 0){
-            return this.schedule[employee].map(item => item.hours).reduce((acc, val) => acc + val, 0)
-        } else {
-            return 0;
-        }
-    }
-  },
 }
 
 </script>
 
 <template>
     <div class="container py-3">
+        <div class="row g-2">
+            <div class="col">
+                <label for="start-date" class="form-label">Start Date</label>
+                <VueDatePicker id="start-date" v-model="selectedDateStart" :enable-time-picker="false"></VueDatePicker>
+            </div>
+            <div class="col">
+                <label for="start-date" class="form-label">End Date</label>
+                <VueDatePicker id="start-date" v-model="selectedDateEnd" :enable-time-picker="false"></VueDatePicker>
+            </div>
+        </div>
         <div class="mb-3">
             <label for="employee-count" class="form-label">Employee Count</label>
             <input type="number" v-model="employeeCount" class="form-control" id="employee-count" placeholder="Employees available">

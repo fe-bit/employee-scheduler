@@ -9,11 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vuepic/vue-datepicker": "^10.0.0",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "date-fns": "^4.1.0",
     "vue": "^3.5.12",
-    "vue-router": "^4.4.5"
+    "vue-router": "^4.4.5",
+    "vuetify": "^3.7.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.4",

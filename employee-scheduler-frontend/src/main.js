@@ -4,9 +4,13 @@ import App from './App.vue'
 
 import { createWebHistory, createRouter } from 'vue-router'
 import TheWelcome from './components/TheWelcome.vue'
-import HelloWorld from './components/HelloWorld.vue'
 import EmployeesView from './views/EmployeesView.vue'
 import SchedulesView from './views/SchedulesView.vue'
+
+
+
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css'
 
 
 const routes = [
@@ -20,6 +24,7 @@ const router = createRouter({
   routes,
 })
 
-createApp(App)
-  .use(router)
-  .mount('#app')
+const app = createApp(App);
+app.use(router)
+app.component('VueDatePicker', VueDatePicker);
+app.mount('#app');
