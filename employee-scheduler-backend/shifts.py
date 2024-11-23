@@ -27,7 +27,7 @@ def get_dates_for(day:date, start_time:time, hours:time):
 def create_shifts_of_month(date_start, date_end):
     shifts = []
     
-    for n in range(int((date_end - date_start).days) + 1):
+    for n in range(1, int((date_end - date_start).days) + 2):
         day = date_start + timedelta(n)
         # KTW
         shifts.append((*get_dates_for(day, time(6), hours=time(8)), CarType.KTW_D))

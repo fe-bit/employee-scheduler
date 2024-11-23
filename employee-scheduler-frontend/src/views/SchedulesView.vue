@@ -1,5 +1,7 @@
 <script>
 import { eachDayOfInterval, format } from 'date-fns';
+import axios from 'axios';
+import moment from 'moment';
 
 
 export default{
@@ -42,9 +44,12 @@ export default{
             data: null,
             schedule: null,
             fitness: null,
+
+            employees: this.getEmployeeData(),
             
-            selectedDateStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-            selectedDateEnd: new Date(new Date().getFullYear(), new Date().getMonth(), 7),
+            selectedDateStart: new Date(new Date().getFullYear(), new Date().getMonth()+1, 1),
+            selectedDateEnd: new Date(new Date().getFullYear(), new Date().getMonth()+1, 7),
+            validationError: null,
         };
     },
     computed:{
@@ -79,15 +84,27 @@ export default{
 
                 // Update schedule dates as before
                 for (let employee in this.schedule) {
-                const updatedEmployeeSchedule = this.schedule[employee].map(item => {
+                const updatedEmployeeSchedule = this.schedule.map(item => {
                     return {
                     ...item,
                     date_start: new Date(item.date_start),
                     date_end: new Date(item.date_end),
                     };
                 });
-                this.schedule[employee] = updatedEmployeeSchedule;
+                this.schedule = updatedEmployeeSchedule;
                 }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        },
+        async getEmployeeData() {
+            try {
+                const response = await axios.get('http://127.0.0.1:5000/api/employees', {
+                    params: {
+                        limit: this.employeeCount
+                    }
+                });
+                this.employees = response.data
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -97,7 +114,6 @@ export default{
             const endDate = first_n_days ? new Date(year, month, first_n_days) : new Date(year, month + 1, 0);
             return eachDayOfInterval({ start: startDate, end: endDate });
         },
-
         getWeekDay(day){
             const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             return daysOfWeek[day.getDay()]
@@ -109,32 +125,57 @@ export default{
                 date1.getDate() === date2.getDate()
             )
         },
-        filteredSchedule(day, i) {
+        filteredSchedule(day, employeeId) {
+            let scheduleOfEmployee = this.filterScheduleByEmployeeId(employeeId);
+            if (scheduleOfEmployee === null){
+                return null;
+            }
+            let x = scheduleOfEmployee.filter((scheduleItem) => this.isSameDay(scheduleItem.date_start, day));
+            x.sort((a, b) => a.date_start - b.date_start);
+            return x;
+        },
+        filterScheduleByEmployeeId(employeeId){
             if(this.schedule === null){ 
                 return null
             }
-            if(this.schedule[i] == null){
-                return null
-            }
-            // console.log(this.schedule[i][0].date_start)
-        let x = this.schedule[i].filter((scheduleItem) => this.isSameDay(scheduleItem.date_start, day));
-        x.sort((a, b) => a.date_start - b.date_start);
-
-        return x;
+            return this.schedule.filter((scheduleItem) => scheduleItem.employeeId == employeeId)
         },
-        totalWorkingHours(employee){
-            if (this.schedule && this.schedule[employee] && this.schedule[employee].length > 0){
-                return this.schedule[employee].map(item => item.hours).reduce((acc, val) => acc + val, 0)
+        totalWorkingHours(employeeId){
+            let scheduleOfEmployee = this.filterScheduleByEmployeeId(employeeId);
+            if (scheduleOfEmployee === null){
+                return 0;
+            }
+            if (scheduleOfEmployee.length > 0){
+                return scheduleOfEmployee.map(item => item.hours).reduce((acc, val) => acc + val, 0)
             } else {
                 return 0;
             }
-        }
+        },
+        targetWorkingHours(employeeId){
+            const start = moment(this.selectedDateStart);
+            const end = moment(this.selectedDateEnd);
+            const days_between = end.diff(start, 'days') + 1;
+            return days_between * this.employees.find(e => e.id == employeeId).working_hours_per_day
+        },
+        isWithinTargetRange(employeeId){
+            let deviation = 0.1;
+            let total = this.totalWorkingHours(employeeId)
+            let target = this.targetWorkingHours(employeeId)
+            let targetLowerBound = target * (1-deviation);
+            let targetUpperBound = target * (1+deviation);
+            return (total >= targetLowerBound) && (total <= targetUpperBound)
+        },
     },
     watch: {
         employeeCount(newValue) {
-        this.employeeCount = Math.max(1, newValue);
+            this.employeeCount = Math.max(1, newValue);
+            this.getEmployeeData()
         }
-  }
+    },
+    mounted() {
+        this.getEmployeeData();
+    }
+
 }
 
 </script>
@@ -144,11 +185,11 @@ export default{
         <div class="row g-2">
             <div class="col">
                 <label for="start-date" class="form-label">Start Date</label>
-                <VueDatePicker id="start-date" v-model="selectedDateStart" :enable-time-picker="false"></VueDatePicker>
+                <VueDatePicker id="start-date" v-model="selectedDateStart" :enable-time-picker="false" :min-date="new Date()"></VueDatePicker>
             </div>
             <div class="col">
                 <label for="start-date" class="form-label">End Date</label>
-                <VueDatePicker id="start-date" v-model="selectedDateEnd" :enable-time-picker="false"></VueDatePicker>
+                <VueDatePicker id="start-date" v-model="selectedDateEnd" :enable-time-picker="false" :min-date="this.selectedDateStart"></VueDatePicker>
             </div>
         </div>
         <div class="mb-3">
@@ -162,7 +203,8 @@ export default{
 
         <button @click="postData">Get Data</button>
         <p>Fitness: {{ fitness }}</p>
-        <table class="table table-hover table-striped table-bordered">
+        <div class="container">
+        <table class="table table-hover table-striped table-bordered px-2">
         <thead>
             <tr>
                 <td class="text-center">Name</td>
@@ -172,9 +214,13 @@ export default{
             </tr>
         </thead>
         <tbody>
-            <tr v-if="this.employeeCount>0" v-for="i in this.employeeCount" >
-                <td class="text-center">{{ i }} (<span :class="{ 'text-success': totalWorkingHours(i) == 40, 'text-danger': totalWorkingHours(i) != 40 }">{{ totalWorkingHours(i) }}</span>)</td>
-                <td class="text-center" v-for="day in this.daysInSelectedRange" :key="day" :set="shifts=filteredSchedule(day, i)" :class="{ 'bg-danger': shifts && shifts.length > 1 }">
+            <tr v-for="employee in this.employees" >
+                <td class="text-center">{{ employee.id }} <br>
+                    {{ employee.name }} <br>
+                    (<span :class="{ 'text-success': isWithinTargetRange(employee.id), 'text-danger': !isWithinTargetRange(employee.id) }">
+                    {{ totalWorkingHours(employee.id) }} / {{  targetWorkingHours(employee.id) }}
+                </span>)</td>
+                <td class="text-center" v-for="day in daysInSelectedRange" :key="day" :set="shifts=filteredSchedule(day, employee.id)" :class="{ 'bg-danger': filteredSchedule(day, employee.id) && filteredSchedule(day, employee.id).length > 1 }">
                     <p v-if="shifts" v-for="shift in shifts">
                         <span>
                             {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(shift.date_start, shift.date_end)"><sup class="">+1</sup></span>
@@ -186,8 +232,13 @@ export default{
         </tbody>
     </table>
 </div>
+</div>
   
 </template>
 
 <style scoped>
+table {
+  width: 90%;
+  overflow-x: auto;
+}
 </style>

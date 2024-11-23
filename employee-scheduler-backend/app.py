@@ -6,10 +6,49 @@ from optimizations.genetic_algorithm.genetic_algorithm_tabu import GeneticAlgori
 from shifts import get_shifts_per_employee
 from datetime import date
 from dateutil.parser import parse
+import random
+from faker import Faker
+import os
+
+if not os.path.exists("names.txt"):
+    fake = Faker()
+    with open("names.txt", "w", encoding="utf-8") as f:
+        for n in range(100):
+            f.write(fake.name() + "\n")
+
+with open('names.txt', 'r') as f:
+    all_names = f.read().splitlines()
 
 
 app = Flask(__name__)
 CORS(app)
+
+@app.route('/api/employee/<int:employee_id>', methods=['GET'])
+def get_employee(employee_id):
+    employee = {
+        "id": employee_id,
+        "name": all_names[employee_id-1],
+        "working_hours_per_day": 5
+    }
+    return jsonify(employee)
+
+@app.route('/api/employees', methods=['GET'])
+def get_employees():
+    limit = request.args.get('limit', default=None, type=int)  # Get the limit parameter from the query string
+    if limit:
+        employees = [{
+            "id": employee_id,
+            "name": all_names[employee_id-1],
+            "working_hours_per_day": 5
+        } for employee_id in range(1, min(limit+1, len(all_names)+1))]
+    else:
+        employees = [{
+            "id": employee_id,
+            "name": all_names[employee_id-1],
+            "working_hours_per_day": 5
+        } for employee_id in range(1, len(all_names)+1)]
+
+    return jsonify(employees)
 
 
 @app.route('/api/get-schedule', methods=['POST'])
@@ -43,17 +82,18 @@ def get_schedule():
         target_fitness=0
     )
     schedule_by_employee = get_shifts_per_employee(ga.shifts, best_chromosome)
-    result = {}
+    result = []
     for employee, schedule in schedule_by_employee.items():
         sched = [
             {
+                "employeeId": employee,
                 "date_start": d[0].isoformat(), 
                 "date_end": d[1].isoformat(), 
                 "hours": (d[1]-d[0]).total_seconds() / 3600,
             }
             for d in schedule
         ]
-        result[employee] = sched
+        result.extend(sched)
     data = {'data': result, "fitness": best_fitness}
     return jsonify(data)
 

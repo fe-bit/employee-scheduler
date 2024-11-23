@@ -47,7 +47,7 @@ def fitness_total_hours_per_employee(shifts_per_employee):
     correct = 0
 
     for employee, total_work_hours in get_total_work_hours_per_employee(shifts_per_employee).items():
-        if total_work_hours < 35 or total_work_hours > 45:
+        if total_work_hours < 32 or total_work_hours > 45:
             ff = abs(40-total_work_hours) * 0.5
             faults += ff
         else:
