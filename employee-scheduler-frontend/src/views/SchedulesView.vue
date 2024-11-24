@@ -104,6 +104,30 @@ export default{
                 console.error('Error fetching data:', error);
             }
         },
+        async getEmployeePreferences() {
+            try {
+                const data = {
+                    employees: this.employeeCount,
+                    start_date: this.selectedDateStart.toISOString(),
+                    end_date: this.selectedDateEnd.toISOString(),
+                };
+
+                const response = await fetch('http://127.0.0.1:5000/api/generate-preferences', {
+                method: 'POST', // Set method to POST
+                headers: { 'Content-Type': 'application/json' }, // Set content type
+                body: JSON.stringify(data), // Send data as JSON in the body
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                console.log(responseData)
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        },
         async getEmployeeData() {
             try {
                 const response = await axios.get('http://127.0.0.1:5000/api/employees', {
@@ -227,7 +251,7 @@ export default{
         </div>
         
 
-        <button @click="postData">Get Data</button>
+        <button class="btn btn-primary" @click="postData">Get Data</button> <button class="btn btn-primary" @click="getEmployeePreferences">Get Employee preferences</button>
         <p>Fitness: {{ fitness }}</p>
         <div class="container">
         <table class="table table-hover table-striped table-bordered px-2">

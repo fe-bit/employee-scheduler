@@ -13,7 +13,7 @@ from shifts import create_shifts_for_dates, get_shifts_per_employee, CarType, ge
 BREAK_PENALTY = 40
 
 
-def calculate_fitness(employee_preferences, genes, shifts):
+def calculate_fitness(genes, shifts):
     fitness = 0
     shifts_per_employee = get_shifts_per_employee(shifts, genes)
     correct, faults = fitness_break_between_shifts(shifts_per_employee)

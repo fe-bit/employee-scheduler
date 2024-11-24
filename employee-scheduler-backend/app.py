@@ -9,6 +9,7 @@ from dateutil.parser import parse
 import random
 from faker import Faker
 import os
+from employee_preference_generator import generate_employee_preferences
 
 
 if not os.path.exists("names.txt"):
@@ -19,6 +20,18 @@ if not os.path.exists("names.txt"):
 
 with open('names.txt', 'r') as f:
     all_names = f.read().splitlines()
+
+def get_start_and_end_dates(data):
+    start_date_str = data.get('start_date')
+    end_date_str = data.get('end_date')
+    # Parse datetime strings with timezones
+    start_datetime = parse(start_date_str)
+    end_datetime = parse(end_date_str)
+    # Extract date components, handling timezones
+    start_date = start_datetime.date()
+    end_date = end_datetime.date()
+    assert start_date < end_date
+    return start_date, end_date
 
 
 app = Flask(__name__)
@@ -52,26 +65,36 @@ def get_employees():
     return jsonify(employees)
 
 
+@app.route('/api/generate-preferences', methods=['POST'])
+def generate_preferences():
+    data = request.get_json()
+    start_date, end_date = get_start_and_end_dates(data)
+    employee_count = int(data.get('employees'))
+
+
+    preferences = generate_employee_preferences(employee_count, start_date, end_date)
+    json_data = [
+        {
+            "employeeId": entry.employee_id,
+            "date_start": entry.date_start.isoformat(), 
+            "date_end": entry.date_end.isoformat(),
+            "preference": entry.preference.value, 
+        } for entry in preferences
+    ]
+    return jsonify(json_data)
+
 @app.route('/api/get-schedule', methods=['POST'])
 def get_schedule():
     data = request.get_json()
 
-    employee_count = int(data.get('employees', 22))
+    employee_count = int(data.get('employees'))
     generations = int(data.get('generations', 100))
     cars_ktw = int(data.get("ktw_cars", 0))
     cars_rtw = int(data.get("rtw_cars", 0))
     cars_nef = int(data.get("nef_cars", 0))
 
-    start_date_str = data.get('start_date')
-    end_date_str = data.get('end_date')
-    # Parse datetime strings with timezones
-    start_datetime = parse(start_date_str)
-    end_datetime = parse(end_date_str)
-    # Extract date components, handling timezones
-    start_date = start_datetime.date()
-    end_date = end_datetime.date()
-    assert start_date < end_date
     
+    start_date, end_date = get_start_and_end_dates(data)
     shifts = create_shifts_for_dates(start_date, end_date, ktw_cars=cars_ktw, rtw_cars=cars_rtw, nef_cars=cars_nef)
 
     ga = GeneticAlgorithmTabu(

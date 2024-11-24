@@ -26,13 +26,6 @@ class GeneticAlgorithmTabu:
         n = employees
         self.gene_min = 1
         self.gene_max = n
-        # self.employees = {
-        #     0: {"name": "Charlie", "qualification": [CarType.KTW_SW, CarType.RTW_SW]}
-        # }
-
-        self.employee_preferences = generate_employee_shifts(num_employees=n, month=12, year=2024)
-        self.employee_preferences_df = pd.DataFrame.from_records(self.employee_preferences)
-        self.employee_idx2id = {i: v for i, v in enumerate(self.employee_preferences_df["employee_id"].unique())} # key: id used for GA; value: id of employee
 
         self.tabu_chromes = set()
         self.population = self._initialize_population()
@@ -74,7 +67,7 @@ class GeneticAlgorithmTabu:
     #     return None
     
     def _calculate_fitness(self, chrom):
-        return calculate_fitness(self.employee_preferences, chrom, self.shifts)
+        return calculate_fitness(chrom, self.shifts)
 
 
     def _select_parent(self, fitness_values: list[float]) -> list[int]:
@@ -175,51 +168,3 @@ class GeneticAlgorithmTabu:
                 print(best_fitness)
         
         return best_chromosome, best_fitness, best_fitness_history
-
-
-def generate_employee_shifts(num_employees=10, month=12, year=2024):
-    """
-    Generate a month of employee shift data with varied preferences
-    
-    Args:
-    - num_employees (int): Number of employees
-    - month (int): Month to generate shifts for
-    - year (int): Year to generate shifts for
-    
-    Returns:
-    - List of shift dictionaries
-    """
-    shifts = []
-    shift_types = [
-        {"start": "06:00:00", "end": "14:00:00"},
-        {"start": "14:00:00", "end": "22:00:00"},
-        {"start": "22:00:00", "end": "06:00:00"}
-    ]
-    preferences = ["preferred", "available", "unavailable"]
-    
-    # Create a list of days in the month
-    days = [day for day in range(1, 32) if datetime(year, month, day).month == month]
-    
-    for employee_id in range(1, num_employees + 1):
-        # Ensure each employee gets close to 40 hours per week
-        shifts_per_week = random.randint(4, 6)
-        
-        for week in range(4):  # 4 weeks in month
-            weekly_shifts = random.sample(days[week*7:(week+1)*7], shifts_per_week)
-            
-            for shift_day in weekly_shifts:
-                shift_type = random.choice(shift_types)
-                preference = random.choices(
-                    preferences, 
-                    weights=[0.4, 0.4, 0.2]  # More weight to preferred/available
-                )[0]
-                
-                shift = {
-                    "employee_id": employee_id,
-                    "date_start": f"{year}-{month:02d}-{shift_day:02d} {shift_type['start']}",
-                    "date_end": f"{year}-{month:02d}-{shift_day:02d} {shift_type['end']}",
-                    "preference": preference
-                }
-                shifts.append(shift)
-    
-    return shifts
