@@ -292,12 +292,19 @@ export default{
                         </span>
                         <hr>
                     </p>
+                    <hr>
+                    <p v-if="preferences" v-for="pref in filteredByDateAndEmployee(preferences, day, employee.id)">
+                        <span :class="{'text-danger': pref.preference === 'unavailable', 'text-success': pref.preference === 'preferred'}">
+                            {{ pref.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ pref.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(pref.date_start, pref.date_end)"><sup class="">+1</sup></span>
+                        </span>
+                        <hr>
+                    </p>
                 </td>
 
-                <td class="text-center" v-else-if="preferences" v-for="day in daysInSelectedRange" :set="shifts=filteredByDateAndEmployee(preferences, day, employee.id)">
-                    <p v-if="shifts" v-for="shift in shifts">
-                        <span :class="{'text-danger': shift.preference === 'unavailable', 'text-success': shift.preference === 'preferred'}">
-                            {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(shift.date_start, shift.date_end)"><sup class="">+1</sup></span>
+                <td class="text-center" v-else-if="preferences" v-for="day in daysInSelectedRange" :set="empPreferences=filteredByDateAndEmployee(preferences, day, employee.id)">
+                    <p v-if="empPreferences" v-for="pref in empPreferences">
+                        <span :class="{'text-danger': pref.preference === 'unavailable', 'text-success': pref.preference === 'preferred'}">
+                            {{ pref.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ pref.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(pref.date_start, pref.date_end)"><sup class="">+1</sup></span>
                         </span>
                         <hr>
                     </p>
