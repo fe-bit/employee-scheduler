@@ -2,6 +2,7 @@
 import { eachDayOfInterval, format } from 'date-fns';
 import axios from 'axios';
 import moment from 'moment';
+import PreferenceTable from "../components/PreferenceTable.vue"
 
 
 export default{
@@ -43,6 +44,7 @@ export default{
             ],
             data: null,
             schedule: null,
+            preferences: null,
             fitness: null,
 
             employees: this.getEmployeeData(),
@@ -90,7 +92,6 @@ export default{
                 this.schedule = responseData.data;
 
                 // Update schedule dates as before
-                for (let employee in this.schedule) {
                 const updatedEmployeeSchedule = this.schedule.map(item => {
                     return {
                     ...item,
@@ -99,7 +100,7 @@ export default{
                     };
                 });
                 this.schedule = updatedEmployeeSchedule;
-                }
+                
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -123,7 +124,17 @@ export default{
                 if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                console.log(responseData)
+                this.preferences = responseData;
+                const updatedPreferences = this.preferences.map(item => {
+                    return {
+                    ...item,
+                    date_start: new Date(item.date_start),
+                    date_end: new Date(item.date_end),
+                    };
+                });
+                this.preferences = updatedPreferences;
+                this.schedule = null;
+                 
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -156,8 +167,8 @@ export default{
                 date1.getDate() === date2.getDate()
             )
         },
-        filteredSchedule(day, employeeId) {
-            let scheduleOfEmployee = this.filterScheduleByEmployeeId(employeeId);
+        filteredByDateAndEmployee(myList, day, employeeId) {
+            let scheduleOfEmployee = this.filterByEmployeeId(myList, employeeId);
             if (scheduleOfEmployee === null){
                 return null;
             }
@@ -165,14 +176,15 @@ export default{
             x.sort((a, b) => a.date_start - b.date_start);
             return x;
         },
-        filterScheduleByEmployeeId(employeeId){
-            if(this.schedule === null){ 
+        filterByEmployeeId(myList, employeeId){
+            if(myList === null){ 
                 return null
             }
-            return this.schedule.filter((scheduleItem) => scheduleItem.employeeId == employeeId)
+            console.log(myList)
+            return myList.filter((scheduleItem) => scheduleItem.employeeId == employeeId)
         },
-        totalWorkingHours(employeeId){
-            let scheduleOfEmployee = this.filterScheduleByEmployeeId(employeeId);
+        totalWorkingHours(myList, employeeId){
+            let scheduleOfEmployee = this.filterByEmployeeId(myList, employeeId);
             if (scheduleOfEmployee === null){
                 return 0;
             }
@@ -190,7 +202,7 @@ export default{
         },
         isWithinTargetRange(employeeId){
             let deviation = 0.1;
-            let total = this.totalWorkingHours(employeeId)
+            let total = this.totalWorkingHours(this.schedule, employeeId)
             let target = this.targetWorkingHours(employeeId)
             let targetLowerBound = target * (1-deviation);
             let targetUpperBound = target * (1+deviation);
@@ -205,7 +217,7 @@ export default{
     },
     mounted() {
         this.getEmployeeData();
-    }
+    },
 
 }
 
@@ -264,19 +276,34 @@ export default{
             </tr>
         </thead>
         <tbody>
+            <!-- <PreferenceTable v-if="!schedule" :employees="employees" />
+            <ScheduleTable v-else /> -->
             <tr v-for="employee in this.employees" >
                 <td class="text-center">{{ employee.id }} <br>
                     {{ employee.name }} <br>
                     (<span :class="{ 'text-success': isWithinTargetRange(employee.id), 'text-danger': !isWithinTargetRange(employee.id) }">
-                    {{ totalWorkingHours(employee.id) }} / {{  targetWorkingHours(employee.id) }}
+                    {{ totalWorkingHours(schedule, employee.id) }} / {{  targetWorkingHours(employee.id) }}
                 </span>)</td>
-                <td class="text-center" v-for="day in daysInSelectedRange" :key="day" :set="shifts=filteredSchedule(day, employee.id)" :class="{ 'bg-danger': filteredSchedule(day, employee.id) && filteredSchedule(day, employee.id).length > 1 }">
+
+                <td class="text-center" v-if="schedule" v-for="day in daysInSelectedRange" :key="day" :set="shifts=filteredByDateAndEmployee(schedule, day, employee.id)" :class="{ 'bg-danger': filteredByDateAndEmployee(schedule, day, employee.id) && filteredByDateAndEmployee(schedule, day, employee.id).length > 1 }">
                     <p v-if="shifts" v-for="shift in shifts">
                         <span>
                             {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(shift.date_start, shift.date_end)"><sup class="">+1</sup></span> ({{ shift.car_type }})
                         </span>
                         <hr>
                     </p>
+                </td>
+
+                <td class="text-center" v-else-if="preferences" v-for="day in daysInSelectedRange" :set="shifts=filteredByDateAndEmployee(preferences, day, employee.id)">
+                    <p v-if="shifts" v-for="shift in shifts">
+                        <span :class="{'text-danger': shift.preference === 'unavailable', 'text-success': shift.preference === 'preferred'}">
+                            {{ shift.date_start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ shift.date_end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} <span v-if="!isSameDay(shift.date_start, shift.date_end)"><sup class="">+1</sup></span>
+                        </span>
+                        <hr>
+                    </p>
+                </td>
+                
+                <td class="text-center" v-else v-for="day in daysInSelectedRange">
                 </td>
             </tr>
         </tbody>

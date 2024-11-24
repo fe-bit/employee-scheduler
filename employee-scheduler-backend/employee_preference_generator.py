@@ -44,8 +44,8 @@ def generate_employee_preferences(num_employees, date_start:datetime, date_end:d
         for day in random.sample(days, int(len(days)/2)):
             shift_type = random.choice(shift_types)
             preference = random.choices(
-                list(PreferenceType), 
-                weights=[0.4, 0.4, 0.2]  # More weight to preferred/available
+                [PreferenceType.PREFERRED, PreferenceType.UNAVAILABLE], 
+                weights=[0.5, 0.5]  # More weight to preferred/available
             )[0]
             
             shift = Preference(

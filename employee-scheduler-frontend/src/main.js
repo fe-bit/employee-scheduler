@@ -6,6 +6,7 @@ import { createWebHistory, createRouter } from 'vue-router'
 import TheWelcome from './components/TheWelcome.vue'
 import EmployeesView from './views/EmployeesView.vue'
 import SchedulesView from './views/SchedulesView.vue'
+import PreferenceTable from "./components/PreferenceTable.vue"
 
 
 
@@ -27,4 +28,5 @@ const router = createRouter({
 const app = createApp(App);
 app.use(router)
 app.component('VueDatePicker', VueDatePicker);
+app.component("PreferenceTable", PreferenceTable)
 app.mount('#app');
