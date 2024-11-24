@@ -73,7 +73,7 @@ def get_schedule():
     assert start_date < end_date
     
     shifts = create_shifts_for_dates(start_date, end_date, ktw_cars=cars_ktw, rtw_cars=cars_rtw, nef_cars=cars_nef)
-    
+
     ga = GeneticAlgorithmTabu(
         population_size=100,
         mutation_rate=0.01,
@@ -95,6 +95,7 @@ def get_schedule():
                 "employeeId": employee,
                 "date_start": d[0].isoformat(), 
                 "date_end": d[1].isoformat(), 
+                "car_type": d.car_type.value,
                 "hours": (d[1]-d[0]).total_seconds() / 3600,
             }
             for d in schedule
