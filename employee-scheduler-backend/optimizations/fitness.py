@@ -8,7 +8,7 @@ from datetime import datetime, date, timedelta, time
 import calendar
 import enum
 import random
-from shifts import create_shifts_of_month, get_shifts_per_employee, CarType, get_total_work_hours_per_employee
+from shifts import create_shifts_for_dates, get_shifts_per_employee, CarType, get_total_work_hours_per_employee
 
 BREAK_PENALTY = 40
 

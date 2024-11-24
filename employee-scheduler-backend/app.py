@@ -3,12 +3,13 @@ from flask_cors import CORS
 import pandas as pd
 from optimizations.genetic_algorithm import GeneticAlgorithm
 from optimizations.genetic_algorithm.genetic_algorithm_tabu import GeneticAlgorithmTabu
-from shifts import get_shifts_per_employee
+from shifts import get_shifts_per_employee, create_shifts_for_dates
 from datetime import date
 from dateutil.parser import parse
 import random
 from faker import Faker
 import os
+
 
 if not os.path.exists("names.txt"):
     fake = Faker()
@@ -57,26 +58,31 @@ def get_schedule():
 
     employee_count = int(data.get('employees', 22))
     generations = int(data.get('generations', 100))
+    cars_ktw = int(data.get("ktw_cars", 0))
+    cars_rtw = int(data.get("rtw_cars", 0))
+    cars_nef = int(data.get("nef_cars", 0))
+
     start_date_str = data.get('start_date')
     end_date_str = data.get('end_date')
-
     # Parse datetime strings with timezones
     start_datetime = parse(start_date_str)
     end_datetime = parse(end_date_str)
-
     # Extract date components, handling timezones
     start_date = start_datetime.date()
     end_date = end_datetime.date()
     assert start_date < end_date
     
+    shifts = create_shifts_for_dates(start_date, end_date, ktw_cars=cars_ktw, rtw_cars=cars_rtw, nef_cars=cars_nef)
+    
     ga = GeneticAlgorithmTabu(
-        start_date, end_date,
         population_size=100,
         mutation_rate=0.01,
         crossover_rate=0.8,
         elitism=True,
-        employees=employee_count
+        employees=employee_count,
+        shifts=shifts
     )
+
     best_chromosome, best_fitness, best_fitness_history = ga.evolve(
         generations=generations,
         target_fitness=0

@@ -4,7 +4,7 @@ from datetime import datetime, date, timedelta, time
 import calendar
 import enum
 import random
-from shifts import create_shifts_of_month, get_shifts_per_employee, CarType
+from shifts import create_shifts_for_dates, get_shifts_per_employee, CarType
 from optimizations.fitness import calculate_fitness
 
 
@@ -18,7 +18,7 @@ class GeneticAlgorithm:
         self.crossover_rate = crossover_rate
         self.elitism = elitism
 
-        self.shifts = create_shifts_of_month(12, 2024)
+        self.shifts = create_shifts_for_dates(12, 2024)
         print(len(self.shifts)*8/employees)
         self.chromosome_length = len(self.shifts)
         n = employees

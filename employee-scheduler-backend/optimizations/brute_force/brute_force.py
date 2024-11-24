@@ -1,10 +1,10 @@
-from shifts import create_shifts_of_month, get_shifts_per_employee, CarType
+from shifts import create_shifts_for_dates, get_shifts_per_employee, CarType
 from optimizations.fitness import calculate_fitness
 
 class BruteForce:
     def __init__(self, employees):
         self.employees = employees
-        self.shifts = create_shifts_of_month(12, 2024)
+        self.shifts = create_shifts_for_dates(12, 2024)
 
     def run(self):
         best_chromosome = None

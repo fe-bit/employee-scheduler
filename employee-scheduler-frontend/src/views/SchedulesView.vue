@@ -50,6 +50,10 @@ export default{
             selectedDateStart: new Date(new Date().getFullYear(), new Date().getMonth()+1, 1),
             selectedDateEnd: new Date(new Date().getFullYear(), new Date().getMonth()+1, 7),
             validationError: null,
+
+            ktwCars: 1,
+            rtwCars: 1,
+            nefCars: 1,
         };
     },
     computed:{
@@ -64,7 +68,10 @@ export default{
                 employees: this.employeeCount,
                 generations: this.generations,
                 start_date: this.selectedDateStart.toISOString(),
-                end_date: this.selectedDateEnd.toISOString()
+                end_date: this.selectedDateEnd.toISOString(),
+                ktw_cars: this.ktwCars,
+                rtw_cars: this.rtwCars,
+                nef_cars: this.nefCars,
                 };
 
                 const response = await fetch('http://127.0.0.1:5000/api/get-schedule', {
@@ -191,15 +198,34 @@ export default{
                 <label for="start-date" class="form-label">End Date</label>
                 <VueDatePicker id="start-date" v-model="selectedDateEnd" :enable-time-picker="false" :min-date="this.selectedDateStart"></VueDatePicker>
             </div>
+            <div class="col">
+                <label for="employee-count" class="form-label">Employee Count</label>
+                <input type="number" v-model="employeeCount" class="form-control" id="employee-count" placeholder="Employees available">
+            </div>
+            <div class="col">
+                <label for="generations" class="form-label">Generations</label>
+                <input type="number" v-model="generations" class="form-control" id="generations" placeholder="Generations">
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="employee-count" class="form-label">Employee Count</label>
-            <input type="number" v-model="employeeCount" class="form-control" id="employee-count" placeholder="Employees available">
+        <div class="row g-2">
+            <h5>Shifts</h5>
+            <div class="col">
+                <label for="ktw-count" class="form-label">KTW Cars</label>
+                <input type="number" v-model="ktwCars" class="form-control" id="ktw-count" placeholder="KTW Cars">
+            </div>
+            <div class="col">
+                <label for="rtw-count" class="form-label">RTW Cars</label>
+                <input type="number" v-model="rtwCars" class="form-control" id="rtw-count" placeholder="RTW Cars">
+            </div>
+            <div class="col">
+                <label for="nef-count" class="form-label">KTW Cars</label>
+                <input type="number" v-model="nefCars" class="form-control" id="nef-count" placeholder="NEF Cars">
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="generations" class="form-label">Generations</label>
-            <input type="number" v-model="generations" class="form-control" id="generations" placeholder="Generations">
+        <div class="row g-2">
+            <h5>Fitness Function</h5>
         </div>
+        
 
         <button @click="postData">Get Data</button>
         <p>Fitness: {{ fitness }}</p>

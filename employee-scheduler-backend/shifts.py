@@ -3,13 +3,16 @@ from datetime import datetime, date, timedelta, time
 import calendar
 import enum
 import random
+from collections import namedtuple
+
+Shift = namedtuple("Shift", ["date_start", "date_end", "car_type"])
 
 class CarType(enum.Enum):
-    KTW_D = 1
-    KTW_SW = 2
-    RTW_D = 3
-    RTW_SW = 4
-    NEF_D = 5
+    KTW_D = "KTW Driver"
+    KTW_SW = "KTW Paramedic"
+    RTW_D = "RTW Driver"
+    RTW_SW = "RTW Paramedic"
+    NEF_D = "NEF Driver"
 
 
 def get_days_in_a_month(month, year):
@@ -24,29 +27,32 @@ def get_dates_for(day:date, start_time:time, hours:time):
     return start_date, end_date
 
 
-def create_shifts_of_month(date_start, date_end):
+def create_shifts_for_dates(date_start, date_end, ktw_cars, rtw_cars, nef_cars):
     shifts = []
     
     for n in range(1, int((date_end - date_start).days) + 2):
         day = date_start + timedelta(n)
         # KTW
-        shifts.append((*get_dates_for(day, time(6), hours=time(8)), CarType.KTW_D))
-        shifts.append((*get_dates_for(day, time(6), hours=time(8)), CarType.KTW_SW))
-        shifts.append((*get_dates_for(day, time(14), hours=time(8)), CarType.KTW_D))
-        shifts.append((*get_dates_for(day, time(14), hours=time(8)), CarType.KTW_SW))
-        shifts.append((*get_dates_for(day, time(22), hours=time(8)), CarType.KTW_D))
-        shifts.append((*get_dates_for(day, time(22), hours=time(8)), CarType.KTW_SW))
+        for i in range(ktw_cars):
+            shifts.append(Shift(*get_dates_for(day, time(6), hours=time(8)), CarType.KTW_D))
+            shifts.append(Shift(*get_dates_for(day, time(6), hours=time(8)), CarType.KTW_SW))
+            shifts.append(Shift(*get_dates_for(day, time(14), hours=time(8)), CarType.KTW_D))
+            shifts.append(Shift(*get_dates_for(day, time(14), hours=time(8)), CarType.KTW_SW))
+            shifts.append(Shift(*get_dates_for(day, time(22), hours=time(8)), CarType.KTW_D))
+            shifts.append(Shift(*get_dates_for(day, time(22), hours=time(8)), CarType.KTW_SW))
         # RTW
-        shifts.append((*get_dates_for(day, time(6), hours=time(8)), CarType.RTW_D))
-        shifts.append((*get_dates_for(day, time(6), hours=time(8)), CarType.RTW_SW))
-        shifts.append((*get_dates_for(day, time(14), hours=time(8)), CarType.RTW_D))
-        shifts.append((*get_dates_for(day, time(14), hours=time(8)), CarType.RTW_SW))
-        shifts.append((*get_dates_for(day, time(22), hours=time(8)), CarType.RTW_D))
-        shifts.append((*get_dates_for(day, time(22), hours=time(8)), CarType.RTW_SW))
+        for i in range(rtw_cars):
+            shifts.append(Shift(*get_dates_for(day, time(6), hours=time(8)), CarType.RTW_D))
+            shifts.append(Shift(*get_dates_for(day, time(6), hours=time(8)), CarType.RTW_SW))
+            shifts.append(Shift(*get_dates_for(day, time(14), hours=time(8)), CarType.RTW_D))
+            shifts.append(Shift(*get_dates_for(day, time(14), hours=time(8)), CarType.RTW_SW))
+            shifts.append(Shift(*get_dates_for(day, time(22), hours=time(8)), CarType.RTW_D))
+            shifts.append(Shift(*get_dates_for(day, time(22), hours=time(8)), CarType.RTW_SW))
         # NEF
-        shifts.append((*get_dates_for(day, time(6), hours=time(8)), CarType.NEF_D))
-        shifts.append((*get_dates_for(day, time(14), hours=time(8)), CarType.NEF_D))
-        shifts.append((*get_dates_for(day, time(22), hours=time(8)), CarType.NEF_D))
+        for i in range(nef_cars):
+            shifts.append(Shift(*get_dates_for(day, time(6), hours=time(8)), CarType.NEF_D))
+            shifts.append(Shift(*get_dates_for(day, time(14), hours=time(8)), CarType.NEF_D))
+            shifts.append(Shift(*get_dates_for(day, time(22), hours=time(8)), CarType.NEF_D))
     return shifts
 
 
