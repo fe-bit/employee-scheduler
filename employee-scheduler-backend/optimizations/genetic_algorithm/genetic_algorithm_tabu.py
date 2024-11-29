@@ -1,18 +1,15 @@
 
-import pandas as pd
-from datetime import datetime, date, timedelta, time
-import calendar
-import enum
 import random
-from shifts import create_shifts_for_dates, get_shifts_per_employee, CarType, Shift
+from shifts import Shift
 from optimizations.fitness import calculate_fitness
 import hashlib
+from optimizations.preference_encoder import encode_preferences
 
 
 
 class GeneticAlgorithmTabu:
 
-    def __init__(self, shifts:list[Shift], population_size=100, mutation_rate=0.01, crossover_rate=0.8, elitism=True, employees=10):
+    def __init__(self, shifts:list[Shift], population_size=100, mutation_rate=0.01, crossover_rate=0.8, elitism=True, employees=10, preferences={}):
         self.population_size = population_size
         
         self.muation_rate = mutation_rate
@@ -29,6 +26,8 @@ class GeneticAlgorithmTabu:
 
         self.tabu_chromes = set()
         self.population = self._initialize_population()
+
+        self.preferences = encode_preferences(preferences, employees, shifts)
 
         
 
@@ -50,24 +49,9 @@ class GeneticAlgorithmTabu:
         hash_object = hashlib.md5(str_list.encode())
         hex_dig = hash_object.hexdigest()
         return hex_dig
-
-
-    # def run(self, data:pd.DataFrame):
-    #     shifts = create_shifts_of_month(12, 2024)
-    #     employee_preferences = generate_employee_shifts(num_employees=10, month=12, year=2024)
-    #     employee_preferences_df = pd.DataFrame.from_records(employee_preferences)
-
-    #     # employee_qualifications = {
-    #     #     0: [CarType.KTW_D, CarType.RTW_D]
-    #     # }
-    #     # print(employee_preferences_df)
-    #     employee_idx2id = {i: v for i, v in enumerate(employee_preferences_df["employee_id"].unique())} # key: id used for GA; value: id of employee
-    #     genes_initial = [random.choices(list(employee_idx2id.keys())) for _ in range(len(shifts))]
-    #     self._calculate_fitness(employee_preferences_df, genes_initial, shifts)
-    #     return None
     
     def _calculate_fitness(self, chrom):
-        return calculate_fitness(chrom, self.shifts)
+        return calculate_fitness(chrom, self.shifts, self.preferences)
 
 
     def _select_parent(self, fitness_values: list[float]) -> list[int]:

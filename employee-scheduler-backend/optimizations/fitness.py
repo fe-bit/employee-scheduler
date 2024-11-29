@@ -9,11 +9,14 @@ import calendar
 import enum
 import random
 from shifts import create_shifts_for_dates, get_shifts_per_employee, CarType, get_total_work_hours_per_employee
+from employee_preference_generator import Preference, PreferenceType
+import numpy as np
+
 
 BREAK_PENALTY = 40
 
 
-def calculate_fitness(genes, shifts):
+def calculate_fitness(genes, shifts, preferences:np.array):
     fitness = 0
     shifts_per_employee = get_shifts_per_employee(shifts, genes)
     correct, faults = fitness_break_between_shifts(shifts_per_employee)
@@ -21,7 +24,9 @@ def calculate_fitness(genes, shifts):
 
     correct, faults = fitness_total_hours_per_employee(shifts_per_employee)
     fitness -= faults
-    return fitness
+
+    fitness += fitness_preference(genes, preferences)
+    return int(fitness)
     
 def fitness_break_between_shifts(shifts_per_employee):
     faults = 0
@@ -54,3 +59,8 @@ def fitness_total_hours_per_employee(shifts_per_employee):
             correct += 1
     return correct, faults
 
+def fitness_preference(genes, preferences:np.array):
+    fitness = 0
+    for shift_id, g in enumerate(genes):
+        fitness += preferences[g-1][shift_id]
+    return fitness

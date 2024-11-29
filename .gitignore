@@ -1,2 +1,1 @@
-*.pyc
-__pycache__/
+employee-scheduler-backend/*.pyc
