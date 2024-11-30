@@ -67,13 +67,18 @@ export default{
     methods: {
         async postData() {
             try {
-                const serializedPrefs = this.preferences.map(item => {
-                    return {
-                    ...item,
-                    date_start: item.date_start.toISOString(),
-                    date_end: item.date_end.toISOString(),
-                    };
-                });
+                if (this.preferences){
+                    const serializedPrefs = this.preferences.map(item => {
+                        return {
+                        ...item,
+                        date_start: item.date_start.toISOString(),
+                        date_end: item.date_end.toISOString(),
+                        };
+                    });
+                } else {
+                    const serializedPrefs = null
+                }
+                
 
                 const data = {
                 employees: this.employeeCount,
