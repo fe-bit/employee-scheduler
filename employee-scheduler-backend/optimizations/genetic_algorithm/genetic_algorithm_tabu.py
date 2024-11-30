@@ -9,7 +9,7 @@ from optimizations.preference_encoder import encode_preferences
 
 class GeneticAlgorithmTabu:
 
-    def __init__(self, shifts:list[Shift], population_size=100, mutation_rate=0.01, crossover_rate=0.8, elitism=True, employees=10, preferences={}):
+    def __init__(self, shifts:list[Shift], population_size=100, mutation_rate=0.01, crossover_rate=0.8, elitism=True, employees=10, preferences={}, work_hours_per_employee=35):
         self.population_size = population_size
         
         self.muation_rate = mutation_rate
@@ -28,6 +28,7 @@ class GeneticAlgorithmTabu:
         self.population = self._initialize_population()
 
         self.preferences = encode_preferences(preferences, employees, shifts)
+        self.work_hours_per_employee = work_hours_per_employee
 
         
 
@@ -51,7 +52,7 @@ class GeneticAlgorithmTabu:
         return hex_dig
     
     def _calculate_fitness(self, chrom):
-        return calculate_fitness(chrom, self.shifts, self.preferences)
+        return calculate_fitness(chrom, self.shifts, self.preferences, self.work_hours_per_employee)
 
 
     def _select_parent(self, fitness_values: list[float]) -> list[int]:
@@ -106,18 +107,22 @@ class GeneticAlgorithmTabu:
         
         for generation in range(generations):
             # Calculate fitness for all chromosomes
-            fitness_values = [self._calculate_fitness(chrom) for chrom in self.population]
-            
+            fitness = [self._calculate_fitness(chrom) for chrom in self.population]
+            fitness_values = [f[0] for f in fitness]
+            fitness_details = [f[1] for f in fitness]
+
             # Track best solution
             generation_best_fitness = max(fitness_values)
             generation_best_index = fitness_values.index(generation_best_fitness)
             generation_best_chromosome = self.population[generation_best_index]
+
+            fitness_details_best = fitness_details[generation_best_index]
             
             if generation_best_fitness > best_fitness:
                 best_fitness = generation_best_fitness
                 best_chromosome = generation_best_chromosome.copy()
             
-            best_fitness_history.append(best_fitness)
+            best_fitness_history.append((best_fitness, fitness_details_best))
             
             # Check if target fitness is reached
             if target_fitness is not None and best_fitness >= target_fitness:

@@ -16,21 +16,30 @@ import numpy as np
 BREAK_PENALTY = 40
 
 
-def calculate_fitness(genes, shifts, preferences:np.array):
+def calculate_fitness(genes, shifts, preferences:np.array, work_hours_per_employee:int):
     fitness = 0
     shifts_per_employee = get_shifts_per_employee(shifts, genes)
-    correct, faults = fitness_break_between_shifts(shifts_per_employee)
+    correct, faults, fault_count = fitness_break_between_shifts(shifts_per_employee)
     fitness -= faults
 
-    correct, faults = fitness_total_hours_per_employee(shifts_per_employee)
+    correct, faults, count_hours = fitness_total_hours_per_employee(shifts_per_employee, work_hours_per_employee)
     fitness -= faults
 
-    fitness += fitness_preference(genes, preferences)
-    return int(fitness)
+    f, count_disregarded, count_accounted = fitness_preference(genes, preferences)
+    fitness += f
+    fitness_history = {
+        "Fitness": fitness,
+        "Break Violations": fault_count,
+        "Hours Violations": count_hours,
+        "Preferred Shifts Accounted": count_accounted,
+        "Unavailable Shifts Disregarded": count_disregarded,
+    }
+    return int(fitness), fitness_history
     
 def fitness_break_between_shifts(shifts_per_employee):
     faults = 0
     correct = 0
+    count = 0
     for employee, schedule in shifts_per_employee.items():
         for i in range(len(schedule)-1):
             left_job = schedule[i][1]
@@ -39,28 +48,38 @@ def fitness_break_between_shifts(shifts_per_employee):
             hours_diff = time_diff.total_seconds() / 3600
             if hours_diff < 10:
                 faults += BREAK_PENALTY
+                count += 1
             else:
                 correct += BREAK_PENALTY
-    return correct, faults
+    return correct, faults, count
 
 def fitness_qualification(shifts_per_employee, qualifications):
     # TODO
     pass
 
-def fitness_total_hours_per_employee(shifts_per_employee):
+def fitness_total_hours_per_employee(shifts_per_employee, work_hours_per_employee):
     faults = 0
+    count = 0
     correct = 0
 
     for employee, total_work_hours in get_total_work_hours_per_employee(shifts_per_employee).items():
-        if total_work_hours < 32 or total_work_hours > 45:
+        if total_work_hours < work_hours_per_employee*0.8 or total_work_hours > work_hours_per_employee*1.2:
             ff = abs(40-total_work_hours) * 0.5
             faults += ff
+            count += 1
         else:
             correct += 1
-    return correct, faults
+    return correct, faults, count
 
 def fitness_preference(genes, preferences:np.array):
     fitness = 0
+    count_accounted = 0
+    count_disregarded = 0
     for shift_id, g in enumerate(genes):
-        fitness += preferences[g-1][shift_id]
-    return fitness
+        p = preferences[g-1][shift_id]
+        if p > 0:
+            count_accounted += 1
+        elif p < 0:
+            count_disregarded += 1
+        fitness += p
+    return fitness, count_disregarded, count_accounted

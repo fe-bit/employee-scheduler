@@ -54,6 +54,8 @@ def generate_employee_preferences(num_employees, date_start:datetime, date_end:d
                 date_end=datetime(day.year, day.month, day.day, shift_type["end"]),
                 preference=preference
             )
+            if shift_type["end"] == 6: # this is a new day
+                shift.date_end = shift.date_end + timedelta(days=1)
             shifts.append(shift)
     
     return shifts

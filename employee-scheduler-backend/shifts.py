@@ -4,6 +4,10 @@ import calendar
 import enum
 import random
 from collections import namedtuple
+import pytz
+
+desired_tz = pytz.timezone('Europe/Berlin')  # Replace with your preferred timezone
+
 
 Shift = namedtuple("Shift", ["date_start", "date_end", "car_type"])
 
@@ -24,6 +28,8 @@ def get_days_in_a_month(month, year):
 def get_dates_for(day:date, start_time:time, hours:time):
     start_date = datetime(day.year, day.month, day.day, start_time.hour, start_time.minute, start_time.second)
     end_date = start_date + timedelta(hours=hours.hour, minutes=hours.minute)
+    start_date = desired_tz.localize(start_date)
+    end_date = desired_tz.localize(end_date)
     return start_date, end_date
 
 

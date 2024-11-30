@@ -10,6 +10,9 @@ import random
 from faker import Faker
 import os
 from employee_preference_generator import generate_employee_preferences, Preference, PreferenceType
+import pytz
+
+berlin_tz = pytz.timezone('Europe/Berlin')
 
 
 if not os.path.exists("names.txt"):
@@ -41,9 +44,9 @@ def get_preferences(preferences_raw):
     for pref in preferences_raw:
         start_datetime = parse(pref["date_start"])
         end_datetime = parse(pref["date_end"])
-        start_date = start_datetime.date()
-        end_date = end_datetime.date()
-        preferences.append(Preference(pref["employeeId"], start_date, end_date, PreferenceType(pref["preference"])))
+        start_datetime = start_datetime.astimezone(berlin_tz)
+        end_datetime = end_datetime.astimezone(berlin_tz)
+        preferences.append(Preference(pref["employeeId"], start_datetime, end_datetime, PreferenceType(pref["preference"])))
     return preferences
 
 
@@ -102,6 +105,7 @@ def get_schedule():
 
     employee_count = int(data.get('employees'))
     generations = int(data.get('generations', 100))
+    population_size = int(data.get('population_size', 100))
     cars_ktw = int(data.get("ktw_cars", 0))
     cars_rtw = int(data.get("rtw_cars", 0))
     cars_nef = int(data.get("nef_cars", 0))
@@ -111,18 +115,19 @@ def get_schedule():
     shifts = create_shifts_for_dates(start_date, end_date, ktw_cars=cars_ktw, rtw_cars=cars_rtw, nef_cars=cars_nef)
 
     ga = GeneticAlgorithmTabu(
-        population_size=100,
+        population_size=population_size,
         mutation_rate=0.01,
         crossover_rate=0.8,
         elitism=True,
         employees=employee_count,
         shifts=shifts,
         preferences=preferences,
+        work_hours_per_employee=(end_date-start_date).days * 5
     )
 
     best_chromosome, best_fitness, best_fitness_history = ga.evolve(
         generations=generations,
-        target_fitness=0
+        target_fitness=None
     )
     schedule_by_employee = get_shifts_per_employee(ga.shifts, best_chromosome)
     result = []
@@ -138,9 +143,7 @@ def get_schedule():
             for d in schedule
         ]
         result.extend(sched)
-    print("Best fitness", best_fitness)
-    print("Result", result)
-    data = {'data': result, "fitness": best_fitness}
+    data = {'data': result, "fitness": best_fitness_history[-1][1]}
     return jsonify(data)
 
 
